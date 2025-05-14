@@ -23,8 +23,12 @@ export class AtlasStorage {
     }
     return this._storageController.getSecret('atlasClientSecret_' + clientId);
   }
-  setClientId(clientId: string): Promise<void> {
-    return this._storageController.setSecret('atlasClientId', clientId);
+  async setClientId(clientId: string): Promise<void> {
+    return await this._storageController.update(
+      StorageVariables.ATLAS_CLIENT_ID,
+      clientId,
+      StorageLocation.WORKSPACE,
+    );
   }
   setClientSecret(clientSecret: string): Promise<void> {
     const clientId = this.getStoredClientId();

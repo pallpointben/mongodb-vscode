@@ -40,7 +40,7 @@ export default class AtlasApiController {
     }
 
     stream?.progress(
-      `Please enter your Atlas ${storedClientId === null ? '' : 'Client ID and '}Client Secret in the input prompts.`,
+      `Please enter your Atlas ${storedClientId === null ? 'Client ID and ' : ''}Client Secret in the input prompts.`,
     );
     const clientId =
       storedClientId ??
