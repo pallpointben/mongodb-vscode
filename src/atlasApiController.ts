@@ -154,4 +154,28 @@ export default class AtlasApiController {
     }
     return await response.json();
   }
+  async fetchSuggestedIndexes(
+    groupId: string,
+    clusterName: string,
+    stream?: vscode.ChatResponseStream,
+  ): Promise<any /* TODO */> {
+    const endpoint = `groups/${groupId}/clusters/${clusterName}/performanceAdvisor/suggestedIndexes`;
+    const response = await this._makeRequest(
+      endpoint,
+      'GET',
+      undefined,
+      stream,
+    );
+    if (!response.ok) {
+      const body = await response.text();
+      log.error('Failed to fetch suggested indexes', {
+        statusText: response.statusText,
+        body,
+      });
+      throw new Error(
+        `Failed to fetch suggested indexes: ${response.statusText}`,
+      );
+    }
+    return await response.json();
+  }
 }

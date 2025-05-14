@@ -1542,6 +1542,18 @@ export default class ParticipantController {
     log.info('Schema advice', { schemaAdvice });
     stream.markdown('```json\n' + JSON.stringify(schemaAdvice) + '\n```\n\n');
 
+    const suggestedIndexes =
+      await this._atlasApiController.fetchSuggestedIndexes(
+        '68225792a6c8ed0b4dc2a0d5',
+        'Cluster0',
+        stream,
+      );
+
+    log.info('Suggested indexes', { suggestedIndexes });
+    stream.markdown(
+      '```json\n' + JSON.stringify(suggestedIndexes) + '\n```\n\n',
+    );
+
     let schema: string | undefined;
     let sampleDocuments: Document[] | undefined;
     try {
@@ -1571,6 +1583,8 @@ export default class ParticipantController {
       schema,
       connectionNames: this._getConnectionNames(),
       ...(sampleDocuments ? { sampleDocuments } : {}),
+      schemaAdvice,
+      suggestedIndexes,
     });
 
     await this.streamChatResponseContentWithCodeActions({
