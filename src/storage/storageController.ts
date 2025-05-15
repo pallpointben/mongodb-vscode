@@ -16,8 +16,6 @@ export enum StorageVariables {
 
   // Atlas-specific variables on workspaceState
   ATLAS_CLIENT_ID = 'ATLAS_CLIENT_ID',
-  // TODO: We should have a way to detect Atlas connection strings, and have the
-  // user be able to explicitly opt into using a service account, performance advisor, etc.
 }
 
 // Typically variables default to 'GLOBAL' scope.
