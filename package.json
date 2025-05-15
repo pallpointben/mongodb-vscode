@@ -1282,6 +1282,14 @@
               "connectionString"
             ]
           }
+        },
+        "mdb.atlas.optedIn": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": null,
+          "description": "Whether the user has opted in to Atlas features."
         }
       }
     },

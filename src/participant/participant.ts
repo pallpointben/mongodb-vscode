@@ -71,6 +71,7 @@ import { DEFAULT_EXPORT_TO_LANGUAGE_DRIVER_SYNTAX } from '../editors/exportToLan
 import { EXPORT_TO_LANGUAGE_ALIASES } from '../editors/playgroundSelectionCodeActionProvider';
 import { CollectionTreeItem, DatabaseTreeItem } from '../explorer';
 import { DocumentSource } from '../documentSource';
+import type { SchemaAdvice, SuggestedIndexes } from '../atlasApiController';
 import AtlasApiController from '../atlasApiController';
 
 const log = createLogger('participant');
@@ -1471,6 +1472,8 @@ export default class ParticipantController {
   }
 
   // @MongoDB /doctor what's wrong with my query to find offices with at least 100 employees?
+  // TODO: Remove eslint-disable if this ever makes it out of Skunkworks.
+  // eslint-disable-next-line complexity
   async handleDoctorRequest(
     request: vscode.ChatRequest,
     context: vscode.ChatContext,
@@ -1531,28 +1534,56 @@ export default class ParticipantController {
       });
     }
 
-    // TODO try to access the user's Atlas credentials including an identifier for the connected
-    // Atlas project. If not available, ask the user to provide. If they say no, we can try
-    // to help without it.
-    const schemaAdvice = await this._atlasApiController.fetchSchemaAdvice(
-      '68225792a6c8ed0b4dc2a0d5',
-      'Cluster0',
-      stream,
-    );
-    log.info('Schema advice', { schemaAdvice });
-    stream.markdown('```json\n' + JSON.stringify(schemaAdvice) + '\n```\n\n');
+    let schemaAdvice: SchemaAdvice | undefined;
+    let suggestedIndexes: SuggestedIndexes | undefined;
+    if (
+      AtlasApiController.isAtlasConnectionString(
+        this._connectionController.getActiveConnectionString(),
+      )
+    ) {
+      log.info('Connection string appears to be Atlas');
+      if (await this._atlasApiController.isOptedIn()) {
+        // try to access the user's Atlas credentials including an identifier for the connected
+        // Atlas project. If not available, ask the user to provide. If they say no, we can try
+        // to help without it.
+        const projectId = await this._atlasApiController.getProjectId();
+        if (projectId) {
+          // Strip the username and password from the connection string so that it
+          // will match what's in the API response, and also to avoid leaking anything
+          const parsedConnectionString = new URL(
+            this._connectionController.getActiveConnectionString(),
+          );
+          parsedConnectionString.username = '';
+          parsedConnectionString.password = '';
 
-    const suggestedIndexes =
-      await this._atlasApiController.fetchSuggestedIndexes(
-        '68225792a6c8ed0b4dc2a0d5',
-        'Cluster0',
-        stream,
-      );
+          const clusterName = await this._atlasApiController.selectCluster(
+            projectId,
+            {
+              connectionString: parsedConnectionString.toString(),
+            },
+          );
 
-    log.info('Suggested indexes', { suggestedIndexes });
-    stream.markdown(
-      '```json\n' + JSON.stringify(suggestedIndexes) + '\n```\n\n',
-    );
+          if (clusterName) {
+            [schemaAdvice, suggestedIndexes] = await Promise.all([
+              this._atlasApiController
+                .fetchSchemaAdvice(projectId, clusterName, stream)
+                .then(({ content }) => content),
+              this._atlasApiController
+                .fetchSuggestedIndexes(projectId, clusterName, stream)
+                .then(({ content }) => content),
+            ]);
+
+            log.info('Schema advice', {
+              schemaAdvice: JSON.stringify(schemaAdvice, null, 2),
+            });
+
+            log.info('Suggested indexes', {
+              suggestedIndexes: JSON.stringify(suggestedIndexes, null, 2),
+            });
+          }
+        }
+      }
+    }
 
     let schema: string | undefined;
     let sampleDocuments: Document[] | undefined;

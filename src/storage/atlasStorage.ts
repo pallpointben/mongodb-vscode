@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import type StorageController from './storageController';
 import { StorageLocation, StorageVariables } from './storageController';
 
@@ -6,6 +7,19 @@ export class AtlasStorage {
 
   constructor({ storageController }: { storageController: StorageController }) {
     this._storageController = storageController;
+  }
+
+  getStoredOptedIn(): boolean | null {
+    return vscode.workspace.getConfiguration().get('mdb.atlas.optedIn') ?? null;
+  }
+  async setOptedIn(optedIn: boolean): Promise<void> {
+    return vscode.workspace
+      .getConfiguration()
+      .update(
+        'mdb.atlas.optedIn',
+        optedIn,
+        vscode.ConfigurationTarget.Workspace,
+      );
   }
 
   getStoredClientId(): string | null {
