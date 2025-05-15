@@ -84,6 +84,38 @@ interface SchemaAdviceResponseBody {
   };
 }
 
+interface SuggestedIndexesResponseBody {
+  status: number;
+  content: {
+    shapes: {
+      avgMs: number;
+      count: string;
+      inefficiencyScore: number;
+      namespace: string;
+      operations: {
+        predicates: unknown[];
+        stats: {
+          ms: number;
+          nReturned: number;
+          nScanned: number;
+          ts: number;
+        };
+      };
+    }[];
+    suggestedIndexes: {
+      avgObjSize: number;
+      impact: string[];
+      index: { name: string }[];
+      /** database.collection */
+      namespace: string;
+      weight: number;
+    }[];
+  };
+}
+
+export type SchemaAdvice = SchemaAdviceResponseBody['content'];
+export type SuggestedIndexes = SuggestedIndexesResponseBody['content'];
+
 export default class AtlasApiController {
   private _clientCreds: ClientCreds | null = null;
   private _tokenData: { accessToken: string; expiresAt: Date } | null = null;
@@ -388,7 +420,7 @@ export default class AtlasApiController {
     groupId: string,
     clusterName: string,
     stream?: vscode.ChatResponseStream,
-  ): Promise<any /* TODO */> {
+  ): Promise<SuggestedIndexesResponseBody> {
     const endpoint = `groups/${groupId}/clusters/${clusterName}/performanceAdvisor/suggestedIndexes`;
     const response = await this._makeRequest(
       endpoint,

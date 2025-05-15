@@ -71,8 +71,8 @@ import { DEFAULT_EXPORT_TO_LANGUAGE_DRIVER_SYNTAX } from '../editors/exportToLan
 import { EXPORT_TO_LANGUAGE_ALIASES } from '../editors/playgroundSelectionCodeActionProvider';
 import { CollectionTreeItem, DatabaseTreeItem } from '../explorer';
 import { DocumentSource } from '../documentSource';
+import type { SchemaAdvice, SuggestedIndexes } from '../atlasApiController';
 import AtlasApiController from '../atlasApiController';
-import type { AtlasStorage } from '../storage/atlasStorage';
 
 const log = createLogger('participant');
 
@@ -1534,9 +1534,8 @@ export default class ParticipantController {
       });
     }
 
-    log.info('Active connection string', {
-      connectionString: this._connectionController.getActiveConnectionString(),
-    });
+    let schemaAdvice: SchemaAdvice | undefined;
+    let suggestedIndexes: SuggestedIndexes | undefined;
     if (
       AtlasApiController.isAtlasConnectionString(
         this._connectionController.getActiveConnectionString(),
@@ -1565,35 +1564,26 @@ export default class ParticipantController {
           );
 
           if (clusterName) {
-            const schemaAdvice = (
-              await this._atlasApiController.fetchSchemaAdvice(
-                projectId,
-                clusterName,
-                stream,
-              )
-            ).content;
+            [schemaAdvice, suggestedIndexes] = await Promise.all([
+              this._atlasApiController
+                .fetchSchemaAdvice(projectId, clusterName, stream)
+                .then(({ content }) => content),
+              this._atlasApiController
+                .fetchSuggestedIndexes(projectId, clusterName, stream)
+                .then(({ content }) => content),
+            ]);
+
             log.info('Schema advice', {
               schemaAdvice: JSON.stringify(schemaAdvice, null, 2),
             });
-            stream.markdown(
-              '```json\n' + JSON.stringify(schemaAdvice) + '\n```\n\n',
-            );
+
+            log.info('Suggested indexes', {
+              suggestedIndexes: JSON.stringify(suggestedIndexes, null, 2),
+            });
           }
         }
       }
     }
-
-    const suggestedIndexes =
-      await this._atlasApiController.fetchSuggestedIndexes(
-        '68225792a6c8ed0b4dc2a0d5',
-        'Cluster0',
-        stream,
-      );
-
-    log.info('Suggested indexes', { suggestedIndexes });
-    stream.markdown(
-      '```json\n' + JSON.stringify(suggestedIndexes) + '\n```\n\n',
-    );
 
     let schema: string | undefined;
     let sampleDocuments: Document[] | undefined;
