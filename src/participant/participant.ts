@@ -1536,6 +1536,7 @@ export default class ParticipantController {
 
     let schemaAdvice: SchemaAdvice | undefined;
     let suggestedIndexes: SuggestedIndexes | undefined;
+    let performanceAdvisorUrl: string | undefined;
     if (
       AtlasApiController.isAtlasConnectionString(
         this._connectionController.getActiveConnectionString(),
@@ -1572,6 +1573,11 @@ export default class ParticipantController {
                 .fetchSuggestedIndexes(projectId, clusterName, stream)
                 .then(({ content }) => content),
             ]);
+            performanceAdvisorUrl =
+              AtlasApiController.buildPerformanceAdvisorUrl(
+                projectId,
+                clusterName,
+              );
 
             log.info('Schema advice', {
               schemaAdvice: JSON.stringify(schemaAdvice, null, 2),
@@ -1616,6 +1622,7 @@ export default class ParticipantController {
       ...(sampleDocuments ? { sampleDocuments } : {}),
       schemaAdvice,
       suggestedIndexes,
+      performanceAdvisorUrl,
     });
 
     await this.streamChatResponseContentWithCodeActions({

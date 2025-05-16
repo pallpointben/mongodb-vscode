@@ -9,6 +9,7 @@ const log = createLogger('Atlas API controller');
 const ACCEPT_HEADER = 'application/vnd.atlas.2024-08-05+json';
 const BASE_URL = 'https://cloud-dev.mongodb.com/api/atlas/v2/';
 const AUTH_URL = 'https://cloud-dev.mongodb.com/api/oauth/token';
+const BASE_WEB_URL = 'https://cloud-dev.mongodb.com/v2/';
 
 interface ClientCreds {
   clientId: string;
@@ -129,6 +130,13 @@ export default class AtlasApiController {
       (parsed.hostname.endsWith('.mongodb.net') ||
         parsed.hostname.endsWith('.mongodb-dev.net'))
     );
+  }
+
+  static buildPerformanceAdvisorUrl(
+    groupId: string,
+    clusterName: string,
+  ): string {
+    return `${BASE_WEB_URL}${groupId}#/metrics/atlasRedirect/${clusterName}?${new URLSearchParams({ path: '<rootMetricsRoute>/advisor' })}`;
   }
 
   constructor({ storageController }: { storageController: StorageController }) {
